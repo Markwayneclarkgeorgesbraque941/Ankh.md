@@ -1,0 +1,22 @@
+model: qwen/qwen3.5-flash-02-23
+fallback_model:
+  provider: openrouter
+  model: x-ai/grok-4.20-beta
+
+memory:
+  user_char_limit: 3300
+
+compression:
+  threshold: 0.71
+
+toolsets:
+  - web
+  - file
+  - memory
+  - delegation
+  - skills
+
+delegation:
+  default_toolsets:
+    - web
+    - file

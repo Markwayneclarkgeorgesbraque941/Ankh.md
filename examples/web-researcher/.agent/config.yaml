@@ -1,0 +1,27 @@
+model: qwen/qwen3.5-flash-02-23
+fallback_model:
+  provider: openrouter
+  model: x-ai/grok-4.20-beta
+memory:
+  user_char_limit: 2500
+compression:
+  threshold: 0.71
+clarify:
+  timeout: 90
+browser:
+  inactivity_timeout: 60
+  record_sessions: false
+toolsets:
+- web
+- browser
+- file
+- todo
+- memory
+- clarify
+- delegation
+- skills
+delegation:
+  max_iterations: 33
+  default_toolsets:
+  - web
+  - file

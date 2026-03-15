@@ -1,0 +1,21 @@
+diff --git a/cli.py b/cli.py
+--- a/cli.py
++++ b/cli.py
+@@ -412,6 +412,17 @@ def load_cli_config() -> Dict[str, Any]:
+         if redact is not None:
+             os.environ["HERMES_REDACT_SECRETS"] = str(redact).lower()
+ 
++    # Inject agent.jsonc prompt (identity + environment + user prompt) when in Ankh scope.
++    # load_config() in hermes_cli/config.py adds <identity>, <environment>, and prompt.
++    try:
++        from hermes_cli.config import load_config
++        ankh_config = load_config()
++        agent_prompt = ankh_config.get("agent", {}).get("system_prompt")
++        if agent_prompt and isinstance(agent_prompt, str) and agent_prompt.strip():
++            defaults.setdefault("agent", {})["system_prompt"] = agent_prompt
++    except Exception:
++        pass
++
+     return defaults
+ 
+ # Load configuration at module startup

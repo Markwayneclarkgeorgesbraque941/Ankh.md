@@ -1,0 +1,232 @@
+diff --git a/hermes_cli/config.py b/hermes_cli/config.py
+index 39501e9..4c5c8fb 100644
+--- a/hermes_cli/config.py
++++ b/hermes_cli/config.py
+@@ -36,18 +36,116 @@ def get_hermes_home() -> Path:
+     """Get the Hermes home directory (~/.hermes)."""
+     return Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+ 
++def find_agent_dir(start_dir: Optional[str] = None) -> Optional[Path]:
++    """Find valid .agent directory by walking up from start_dir (default: cwd)."""
++    dir_path = Path(start_dir or os.getcwd()).resolve()
++    home_agent = (Path.home() / ".agent").resolve()
++    while dir_path != dir_path.parent:
++        agent_dir = dir_path / ".agent"
++        if agent_dir.exists() and agent_dir.is_dir():
++            if agent_dir.resolve() == home_agent:
++                dir_path = dir_path.parent
++                continue
++            if (agent_dir / "config.yaml").is_file():
++                return agent_dir
++        dir_path = dir_path.parent
++    return None
++
++
++def get_config_directories() -> List[Path]:
++    """Return config dirs in merge order: global first, then local (local overrides)."""
++    dirs: List[Path] = [get_hermes_home()]
++    if os.getenv("HERMES_ANKH_SCOPE") == "global":
++        return dirs
++    local = find_agent_dir()
++    if local is not None:
++        dirs.append(local)
++    return dirs
++
++
+ def get_config_path() -> Path:
+-    """Get the main config file path."""
+-    return get_hermes_home() / "config.yaml"
++    """Get the main config file path (local .agent/config.yaml if in project)."""
++    dirs = get_config_directories()
++    for config_dir in reversed(dirs):
++        config_path = config_dir / "config.yaml"
++        if config_path.exists():
++            return config_path
++    return dirs[-1] / "config.yaml"
+ 
+ def get_env_path() -> Path:
+-    """Get the .env file path (for API keys)."""
+-    return get_hermes_home() / ".env"
++    """Get the .env file path (local .agent/.env if in project)."""
++    dirs = get_config_directories()
++    for config_dir in reversed(dirs):
++        env_path = config_dir / ".env"
++        if env_path.exists():
++            return env_path
++    return dirs[-1] / ".env"
+ 
+ def get_project_root() -> Path:
+     """Get the project installation directory."""
+     return Path(__file__).parent.parent.resolve()
+ 
++def get_ankh_scope_root(start_dir: Optional[str] = None) -> Path:
++    """Return the active scope root for skills, sessions, and auxiliary runtime state."""
++    if os.getenv("HERMES_ANKH_SCOPE") == "global":
++        return get_hermes_home()
++    scope_root = os.getenv("HERMES_ANKH_SCOPE_ROOT")
++    if scope_root:
++        scoped = Path(scope_root).resolve()
++        if scoped.is_dir() and (scoped / "config.yaml").is_file():
++            return scoped
++    start = start_dir or os.getenv("MESSAGING_CWD") or os.getcwd()
++    local = find_agent_dir(start)
++    if local is not None:
++        return local
++    return get_hermes_home()
++
++
++def get_scoped_path(relative: str) -> Path:
++    """Return a path under the active scope root."""
++    return get_ankh_scope_root() / relative
++
++
++def get_auth_path() -> Path:
++    return get_ankh_scope_root() / "auth.json"
++
++
++def get_logs_dir() -> Path:
++    return get_ankh_scope_root() / "logs"
++
++
++def get_cron_dir() -> Path:
++    return get_ankh_scope_root() / "cron"
++
++
++def get_sessions_dir() -> Path:
++    return get_ankh_scope_root() / "sessions"
++
++
++def get_memories_dir() -> Path:
++    return get_ankh_scope_root() / "memories"
++
++
++def get_hooks_dir() -> Path:
++    return get_ankh_scope_root() / "hooks"
++
++
++def get_pairing_dir() -> Path:
++    return get_ankh_scope_root() / "pairing"
++
++
++def get_gateway_config_path() -> Path:
++    return get_ankh_scope_root() / "gateway.json"
++
++
++def get_channel_directory_path() -> Path:
++    return get_ankh_scope_root() / "channel_directory.json"
++
++
++def get_sticker_cache_dir() -> Path:
++    return get_ankh_scope_root() / "sticker_cache.json"
++
++
+ def _secure_dir(path):
+     """Set directory to owner-only access (0700). No-op on Windows."""
+     try:
+@@ -852,28 +950,26 @@ def _normalize_max_turns_config(config: Dict[str, Any]) -> Dict[str, Any]:
+ 
+ 
+ def load_config() -> Dict[str, Any]:
+-    """Load configuration from ~/.hermes/config.yaml."""
++    """Load configuration from ~/.hermes plus local .agent overrides."""
+     import copy
+-    config_path = get_config_path()
+-    
+     config = copy.deepcopy(DEFAULT_CONFIG)
+-    
+-    if config_path.exists():
+-        try:
+-            with open(config_path, encoding="utf-8") as f:
+-                user_config = yaml.safe_load(f) or {}
+-
+-            if "max_turns" in user_config:
+-                agent_user_config = dict(user_config.get("agent") or {})
+-                if agent_user_config.get("max_turns") is None:
+-                    agent_user_config["max_turns"] = user_config["max_turns"]
+-                user_config["agent"] = agent_user_config
+-                user_config.pop("max_turns", None)
+-
+-            config = _deep_merge(config, user_config)
+-        except Exception as e:
+-            print(f"Warning: Failed to load config: {e}")
+-    
++    for config_dir in get_config_directories():
++        config_path = config_dir / "config.yaml"
++        if config_path.exists():
++            try:
++                with open(config_path, encoding="utf-8") as f:
++                    user_config = yaml.safe_load(f) or {}
++
++                if "max_turns" in user_config:
++                    agent_user_config = dict(user_config.get("agent") or {})
++                    if agent_user_config.get("max_turns") is None:
++                        agent_user_config["max_turns"] = user_config["max_turns"]
++                    user_config["agent"] = agent_user_config
++                    user_config.pop("max_turns", None)
++
++                config = _deep_merge(config, user_config)
++            except Exception as e:
++                print(f"Warning: Failed to load config from {config_path}: {e}")
+     return _normalize_max_turns_config(config)
+ 
+ 
+@@ -908,11 +1004,11 @@ _COMMENTED_SECTIONS = """
+ 
+ 
+ def save_config(config: Dict[str, Any]):
+-    """Save configuration to ~/.hermes/config.yaml."""
++    """Save configuration to the active scope config file."""
+     from utils import atomic_yaml_write
+ 
+-    ensure_hermes_home()
+     config_path = get_config_path()
++    config_path.parent.mkdir(parents=True, exist_ok=True)
+     normalized = _normalize_max_turns_config(config)
+ 
+     # Build optional commented-out sections for features that are off by
+@@ -934,28 +1030,28 @@ def save_config(config: Dict[str, Any]):
+ 
+ 
+ def load_env() -> Dict[str, str]:
+-    """Load environment variables from ~/.hermes/.env."""
+-    env_path = get_env_path()
+-    env_vars = {}
+-    
+-    if env_path.exists():
+-        # On Windows, open() defaults to the system locale (cp1252) which can
+-        # fail on UTF-8 .env files. Use explicit UTF-8 only on Windows.
+-        open_kw = {"encoding": "utf-8", "errors": "replace"} if _IS_WINDOWS else {}
+-        with open(env_path, **open_kw) as f:
+-            for line in f:
+-                line = line.strip()
+-                if line and not line.startswith('#') and '=' in line:
+-                    key, _, value = line.partition('=')
+-                    env_vars[key.strip()] = value.strip().strip('"\'')
+-    
++    """Load environment variables from ~/.hermes plus local .agent overrides."""
++    env_vars: Dict[str, str] = {}
++    open_kw = {"encoding": "utf-8", "errors": "replace"} if _IS_WINDOWS else {}
++    for config_dir in get_config_directories():
++        env_path = config_dir / ".env"
++        if env_path.exists():
++            try:
++                with open(env_path, **open_kw) as f:
++                    for line in f:
++                        line = line.strip()
++                        if line and not line.startswith('#') and '=' in line:
++                            key, _, value = line.partition('=')
++                            env_vars[key.strip()] = value.strip().strip('"\'')
++            except Exception as e:
++                print(f"Warning: Failed to load .env from {env_path}: {e}")
+     return env_vars
+ 
+ 
+ def save_env_value(key: str, value: str):
+-    """Save or update a value in ~/.hermes/.env."""
+-    ensure_hermes_home()
++    """Save or update a value in the active scope .env file."""
+     env_path = get_env_path()
++    env_path.parent.mkdir(parents=True, exist_ok=True)
+     
+     # On Windows, open() defaults to the system locale (cp1252) which can
+     # cause OSError errno 22 on UTF-8 .env files.

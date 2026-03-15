@@ -1,0 +1,36 @@
+{
+  "name": "ankh-hermes",
+  "description": "Hermes Agent with per-folder .agent/ scoping (Agent Ankh)",
+  "source": {
+    "type": "git",
+    "url": "https://github.com/NousResearch/hermes-agent",
+    "branch": "v2026.3.12",
+    "version": "v2026.3.12"
+  },
+  "paths": {
+    "cache": "./.build/cache/{version}",
+    "build": "./.build",
+    "patches": "./src/patches",
+    "scripts": "./src/scripts"
+  },
+  "bindings": [
+    {
+      "id": "ankh",
+      "type": "cli",
+      "target": "~/.agent/extensions/ankh/bin/ankh",
+      "description": "Management CLI: install, setup, uninstall"
+    },
+    {
+      "id": "ankh-hermes",
+      "type": "cli",
+      "target": "~/.agent/extensions/ankh/bin/ankh-hermes",
+      "description": "Alias to hermes ankh (passthrough to ankh)"
+    },
+    {
+      "id": "hermes",
+      "type": "cli",
+      "target": "~/.agent/extensions/ankh/bin/hermes",
+      "description": "Multiplexer: patched in .agent scope, else default Hermes"
+    }
+  ]
+}

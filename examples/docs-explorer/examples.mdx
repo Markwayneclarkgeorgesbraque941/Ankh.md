@@ -1,0 +1,76 @@
+# Hermes Ankh Examples
+
+These folders show different ways you can use Agent Ankh. Each one is a ready-to-use setup focused on a specific task.
+
+## What's in Each Example
+
+| Example | What it does |
+|---------|--------------|
+| [Docs Explorer](docs-explorer/README.md) | Helps you learn how Agent Ankh works and where things live in the project |
+| [Web Researcher](web-researcher/README.md) | Searches the web, reads pages, and summarizes what it finds |
+| [ASCII Designer](ascii-designer/README.md) | Creates text art, banners, and fun terminal-style visuals |
+| [Diagram Maker](diagram-maker/README.md) | Draws diagrams and flowcharts you can open in Excalidraw |
+| [Plan Writer](plan-writer/README.md) | Turns your ideas into step-by-step implementation plans |
+
+## How to Try One
+
+1. Make sure Agent Ankh is set up (run `bun bootstrap` from the repo root if needed).
+2. Open a terminal and go into the example folder, e.g. `cd examples/web-researcher`.
+3. Run `hermes` to start chatting with the agent.
+
+Each example uses its own settings and skills, so the agent behaves differently in each folder.
+
+Project folders for validating local `.agent/` compartmentalization.
+
+## Ankh Manifest Model
+
+This sandbox mirrors the default Hermes home layout:
+
+- **Global baseline**: `src/resources/defaults/` (mirrors `~/.hermes`)
+- **Project metadata**: `examples/<profile>/.agent/agent.jsonc` (mainframe, uuid, title, prompt; mainframe must be "hermes")
+- **Project config**: `examples/<profile>/.agent/config.yaml` (model, toolsets, etc.)
+
+`agent.jsonc` holds Ankh-only metadata (agent identity, prompt for the banner). All Hermes settings (toolsets, model, terminal, etc.) live in `.agent/config.yaml`, which merges with `~/.hermes/config.yaml` (local overrides global). Unknown keys in config are preserved for forward compatibility with upstream Hermes docs.
+
+When you run `hermes` inside these folders, the patched Ankh runtime is used and scoped data resolves from that project `.agent/` directory.
+
+## Profiles
+
+| Project | Use case | Toolsets | Model |
+|---------|----------|----------|-------|
+| [docs-explorer](docs-explorer/README.md) | Ankh docs + file map | web, file, memory, delegation, skills | qwen/qwen3.5-flash-02-23 |
+| [web-researcher](web-researcher/README.md) | Web research + synthesis | web, browser, file, todo, memory, clarify, delegation, skills | qwen/qwen3.5-flash-02-23 |
+| [ascii-designer](ascii-designer/README.md) | ASCII art, banners, text visuals | file, terminal, memory, clarify, skills | qwen/qwen3.5-flash-02-23 |
+| [diagram-maker](diagram-maker/README.md) | Excalidraw + ASCII diagrams | file, terminal, memory, clarify, skills | qwen/qwen3.5-flash-02-23 |
+| [plan-writer](plan-writer/README.md) | Implementation plans from specs | file, memory, clarify, skills | qwen/qwen3.5-flash-02-23 |
+
+## Quick Validation
+
+From the ankh repo root:
+
+```bash
+# Config and active profile by folder
+cd examples/docs-explorer && hermes config
+cd ../web-researcher && hermes config
+cd ../ascii-designer && hermes config
+cd ../diagram-maker && hermes config
+cd ../plan-writer && hermes config
+
+# Active skills are folder-scoped
+cd ../docs-explorer && hermes skills list
+cd ../web-researcher && hermes skills list
+
+# Outside valid .agent scope -> default Hermes fallback
+cd ../.. && hermes config
+
+# Ankh docs
+hermes ankh
+```
+
+## Optional Repo-Local Baseline
+
+```bash
+export HERMES_HOME="$(pwd)/src/resources/defaults"
+```
+
+Ensure `~/.agent/extensions/ankh/bin` is in your PATH, or use `~/.agent/extensions/ankh/bin/hermes`.

@@ -1,0 +1,18 @@
+model: qwen/qwen3.5-flash-02-23
+toolsets:
+  - file
+  - terminal
+  - memory
+  - clarify
+  - skills
+max_turns: 140
+compression:
+  threshold: 0.8
+memory:
+  memory_char_limit: 2600
+  user_char_limit: 1600
+clarify:
+  timeout: 90
+fallback_model:
+  provider: openrouter
+  model: google/gemini-3-flash-preview

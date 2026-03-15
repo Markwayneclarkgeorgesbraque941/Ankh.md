@@ -1,0 +1,300 @@
+diff --git a/cron/jobs.py b/cron/jobs.py
+index 186424c..d141127 100644
+--- a/cron/jobs.py
++++ b/cron/jobs.py
+@@ -23,11 +23,11 @@ except ImportError:
+     HAS_CRONITER = False
+ 
+ # =============================================================================
+-# Configuration
++# Configuration (scoped: .agent/cron when in project, else ~/.hermes/cron)
+ # =============================================================================
+ 
+-HERMES_DIR = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+-CRON_DIR = HERMES_DIR / "cron"
++from hermes_cli.config import get_cron_dir
++CRON_DIR = get_cron_dir()
+ JOBS_FILE = CRON_DIR / "jobs.json"
+ OUTPUT_DIR = CRON_DIR / "output"
+ 
+diff --git a/cron/scheduler.py b/cron/scheduler.py
+index c80122c..c2d697a 100644
+--- a/cron/scheduler.py
++++ b/cron/scheduler.py
+@@ -35,12 +35,10 @@ logger = logging.getLogger(__name__)
+ sys.path.insert(0, str(Path(__file__).parent.parent))
+ 
+ from cron.jobs import get_due_jobs, mark_job_run, save_job_output
+-
+-# Resolve Hermes home directory (respects HERMES_HOME override)
+-_hermes_home = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
++from hermes_cli.config import get_cron_dir
+ 
+ # File-based lock prevents concurrent ticks from gateway + daemon + systemd timer
+-_LOCK_DIR = _hermes_home / "cron"
++_LOCK_DIR = get_cron_dir()
+ _LOCK_FILE = _LOCK_DIR / ".tick.lock"
+ 
+ 
+diff --git a/gateway/channel_directory.py b/gateway/channel_directory.py
+index 4d11c3a..b2b7ca0 100644
+--- a/gateway/channel_directory.py
++++ b/gateway/channel_directory.py
+@@ -14,7 +14,8 @@ from typing import Any, Dict, List, Optional
+ 
+ logger = logging.getLogger(__name__)
+ 
+-DIRECTORY_PATH = Path.home() / ".hermes" / "channel_directory.json"
++from hermes_cli.config import get_channel_directory_path
++DIRECTORY_PATH = get_channel_directory_path()
+ 
+ 
+ def _session_entry_id(origin: Dict[str, Any]) -> Optional[str]:
+@@ -129,7 +130,8 @@ def _build_slack(adapter) -> List[Dict[str, str]]:
+ 
+ def _build_from_sessions(platform_name: str) -> List[Dict[str, str]]:
+     """Pull known channels/contacts from sessions.json origin data."""
+-    sessions_path = Path.home() / ".hermes" / "sessions" / "sessions.json"
++    from hermes_cli.config import get_sessions_dir
++    sessions_path = get_sessions_dir() / "sessions.json"
+     if not sessions_path.exists():
+         return []
+ 
+diff --git a/gateway/config.py b/gateway/config.py
+index d325abc..95699be 100644
+--- a/gateway/config.py
++++ b/gateway/config.py
+@@ -19,6 +19,11 @@ from enum import Enum
+ logger = logging.getLogger(__name__)
+ 
+ 
++def _default_sessions_dir() -> Path:
++    from hermes_cli.config import get_sessions_dir
++    return get_sessions_dir()
++
++
+ class Platform(Enum):
+     """Supported messaging platforms."""
+     LOCAL = "local"
+@@ -147,8 +152,8 @@ class GatewayConfig:
+     # Reset trigger commands
+     reset_triggers: List[str] = field(default_factory=lambda: ["/new", "/reset"])
+     
+-    # Storage paths
+-    sessions_dir: Path = field(default_factory=lambda: Path.home() / ".hermes" / "sessions")
++    # Storage paths (scoped: .agent/sessions when in project)
++    sessions_dir: Path = field(default_factory=_default_sessions_dir)
+     
+     # Delivery settings
+     always_log_local: bool = True  # Always save cron outputs to local files
+@@ -243,7 +248,7 @@ class GatewayConfig:
+         if "default_reset_policy" in data:
+             default_policy = SessionResetPolicy.from_dict(data["default_reset_policy"])
+         
+-        sessions_dir = Path.home() / ".hermes" / "sessions"
++        sessions_dir = _default_sessions_dir()
+         if "sessions_dir" in data:
+             sessions_dir = Path(data["sessions_dir"])
+         
+@@ -270,8 +275,8 @@ def load_gateway_config() -> GatewayConfig:
+     """
+     config = GatewayConfig()
+     
+-    # Try loading from ~/.hermes/gateway.json
+-    gateway_config_path = Path.home() / ".hermes" / "gateway.json"
++    from hermes_cli.config import get_gateway_config_path
++    gateway_config_path = get_gateway_config_path()
+     if gateway_config_path.exists():
+         try:
+             with open(gateway_config_path, "r", encoding="utf-8") as f:
+@@ -285,7 +290,8 @@ def load_gateway_config() -> GatewayConfig:
+     # for session reset policy since that's where hermes setup writes it.
+     try:
+         import yaml
+-        config_yaml_path = Path.home() / ".hermes" / "config.yaml"
++        from hermes_cli.config import get_config_path
++        config_yaml_path = get_config_path()
+         if config_yaml_path.exists():
+             with open(config_yaml_path, encoding="utf-8") as f:
+                 yaml_cfg = yaml.safe_load(f) or {}
+@@ -477,8 +483,9 @@ def _apply_env_overrides(config: GatewayConfig) -> None:
+ 
+ 
+ def save_gateway_config(config: GatewayConfig) -> None:
+-    """Save gateway configuration to ~/.hermes/gateway.json."""
+-    gateway_config_path = Path.home() / ".hermes" / "gateway.json"
++    """Save gateway configuration (scoped: .agent/gateway.json when in project)."""
++    from hermes_cli.config import get_gateway_config_path
++    gateway_config_path = get_gateway_config_path()
+     gateway_config_path.parent.mkdir(parents=True, exist_ok=True)
+     
+     with open(gateway_config_path, "w", encoding="utf-8") as f:
+diff --git a/gateway/delivery.py b/gateway/delivery.py
+index 5bcd58f..3cb1146 100644
+--- a/gateway/delivery.py
++++ b/gateway/delivery.py
+@@ -116,7 +116,8 @@ class DeliveryRouter:
+         """
+         self.config = config
+         self.adapters = adapters or {}
+-        self.output_dir = Path.home() / ".hermes" / "cron" / "output"
++        from hermes_cli.config import get_cron_dir
++        self.output_dir = get_cron_dir() / "output"
+     
+     def resolve_targets(
+         self,
+@@ -255,8 +256,9 @@ class DeliveryRouter:
+     
+     def _save_full_output(self, content: str, job_id: str) -> Path:
+         """Save full cron output to disk and return the file path."""
++        from hermes_cli.config import get_cron_dir
+         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+-        out_dir = Path.home() / ".hermes" / "cron" / "output"
++        out_dir = get_cron_dir() / "output"
+         out_dir.mkdir(parents=True, exist_ok=True)
+         path = out_dir / f"{job_id}_{timestamp}.txt"
+         path.write_text(content)
+diff --git a/gateway/hooks.py b/gateway/hooks.py
+index d2face1..5004373 100644
+--- a/gateway/hooks.py
++++ b/gateway/hooks.py
+@@ -27,7 +27,8 @@ from typing import Any, Callable, Dict, List, Optional
+ import yaml
+ 
+ 
+-HOOKS_DIR = Path(os.path.expanduser("~/.hermes/hooks"))
++from hermes_cli.config import get_hooks_dir
++HOOKS_DIR = get_hooks_dir()
+ 
+ 
+ class HookRegistry:
+diff --git a/gateway/mirror.py b/gateway/mirror.py
+index f54e6e1..e5a6153 100644
+--- a/gateway/mirror.py
++++ b/gateway/mirror.py
+@@ -17,7 +17,8 @@ from typing import Optional
+ 
+ logger = logging.getLogger(__name__)
+ 
+-_SESSIONS_DIR = Path.home() / ".hermes" / "sessions"
++from hermes_cli.config import get_sessions_dir
++_SESSIONS_DIR = get_sessions_dir()
+ _SESSIONS_INDEX = _SESSIONS_DIR / "sessions.json"
+ 
+ 
+diff --git a/gateway/pairing.py b/gateway/pairing.py
+index b1e066f..af8da6d 100644
+--- a/gateway/pairing.py
++++ b/gateway/pairing.py
+@@ -39,7 +39,8 @@ LOCKOUT_SECONDS = 3600              # Lockout duration after too many failures
+ MAX_PENDING_PER_PLATFORM = 3        # Max pending codes per platform
+ MAX_FAILED_ATTEMPTS = 5             # Failed approvals before lockout
+ 
+-PAIRING_DIR = Path(os.path.expanduser("~/.hermes/pairing"))
++from hermes_cli.config import get_pairing_dir
++PAIRING_DIR = get_pairing_dir()
+ 
+ 
+ def _secure_write(path: Path, data: str) -> None:
+diff --git a/gateway/platforms/base.py b/gateway/platforms/base.py
+index e2eb2e4..056ab9f 100644
+--- a/gateway/platforms/base.py
++++ b/gateway/platforms/base.py
+@@ -42,8 +42,9 @@ GATEWAY_SECRET_CAPTURE_UNSUPPORTED_MESSAGE = (
+ # (e.g. Telegram file URLs expire after ~1 hour).
+ # ---------------------------------------------------------------------------
+ 
+-# Default location: ~/.hermes/image_cache/
+-IMAGE_CACHE_DIR = Path(os.path.expanduser("~/.hermes/image_cache"))
++# Default location (scoped: .agent/image_cache when in project)
++from hermes_cli.config import get_ankh_scope_root
++IMAGE_CACHE_DIR = get_ankh_scope_root() / "image_cache"
+ 
+ 
+ def get_image_cache_dir() -> Path:
+@@ -125,7 +126,7 @@ def cleanup_image_cache(max_age_hours: int = 24) -> int:
+ # here so the STT tool (OpenAI Whisper) can transcribe them from local files.
+ # ---------------------------------------------------------------------------
+ 
+-AUDIO_CACHE_DIR = Path(os.path.expanduser("~/.hermes/audio_cache"))
++AUDIO_CACHE_DIR = get_ankh_scope_root() / "audio_cache"
+ 
+ 
+ def get_audio_cache_dir() -> Path:
+@@ -184,7 +185,7 @@ async def cache_audio_from_url(url: str, ext: str = ".ogg") -> str:
+ # here so the agent can reference them by local file path.
+ # ---------------------------------------------------------------------------
+ 
+-DOCUMENT_CACHE_DIR = Path(os.path.expanduser("~/.hermes/document_cache"))
++DOCUMENT_CACHE_DIR = get_ankh_scope_root() / "document_cache"
+ 
+ SUPPORTED_DOCUMENT_TYPES = {
+     ".pdf": "application/pdf",
+diff --git a/gateway/platforms/whatsapp.py b/gateway/platforms/whatsapp.py
+index 9d140bb..7c2b69c 100644
+--- a/gateway/platforms/whatsapp.py
++++ b/gateway/platforms/whatsapp.py
+@@ -26,6 +26,8 @@ _IS_WINDOWS = platform.system() == "Windows"
+ from pathlib import Path
+ from typing import Dict, List, Optional, Any
+ 
++from hermes_cli.config import get_ankh_scope_root
++
+ logger = logging.getLogger(__name__)
+ 
+ 
+@@ -132,7 +134,7 @@ class WhatsAppAdapter(BasePlatformAdapter):
+         )
+         self._session_path: Path = Path(config.extra.get(
+             "session_path",
+-            Path.home() / ".hermes" / "whatsapp" / "session"
++            get_ankh_scope_root() / "whatsapp" / "session"
+         ))
+         self._message_queue: asyncio.Queue = asyncio.Queue()
+         self._bridge_log_fh = None
+diff --git a/gateway/run.py b/gateway/run.py
+index 940dcdf..fcd06c7 100644
+--- a/gateway/run.py
++++ b/gateway/run.py
+@@ -28,8 +28,9 @@ from typing import Dict, Optional, Any, List
+ # Add parent directory to path
+ sys.path.insert(0, str(Path(__file__).parent.parent))
+ 
+-# Resolve Hermes home directory (respects HERMES_HOME override)
+-_hermes_home = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
++# Resolve Hermes home (scoped: .agent when in project; uses MESSAGING_CWD for daemon)
++from hermes_cli.config import get_ankh_scope_root
++_hermes_home = get_ankh_scope_root(os.getenv("MESSAGING_CWD"))
+ 
+ # Load environment variables from ~/.hermes/.env first
+ from dotenv import load_dotenv
+diff --git a/gateway/status.py b/gateway/status.py
+index 78d7194..1f66cb0 100644
+--- a/gateway/status.py
++++ b/gateway/status.py
+@@ -17,8 +17,9 @@ from typing import Optional
+ 
+ 
+ def _get_pid_path() -> Path:
+-    """Return the path to the gateway PID file, respecting HERMES_HOME."""
+-    home = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
++    """Return the path to the gateway PID file (scoped: .agent when in project)."""
++    from hermes_cli.config import get_ankh_scope_root
++    home = get_ankh_scope_root()
+     return home / "gateway.pid"
+ 
+ 
+diff --git a/gateway/sticker_cache.py b/gateway/sticker_cache.py
+index 597f672..715a9d9 100644
+--- a/gateway/sticker_cache.py
++++ b/gateway/sticker_cache.py
+@@ -15,7 +15,8 @@ from pathlib import Path
+ from typing import Optional
+ 
+ 
+-CACHE_PATH = Path(os.path.expanduser("~/.hermes/sticker_cache.json"))
++from hermes_cli.config import get_sticker_cache_dir
++CACHE_PATH = get_sticker_cache_dir()
+ 
+ # Vision prompt for describing stickers -- kept concise to save tokens
+ STICKER_VISION_PROMPT = (

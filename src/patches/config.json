@@ -1,0 +1,40 @@
+{
+	"version": "1.0.0",
+	"description": "Hermes Ankh patches for local .agent directory support and scope coverage",
+	"core": {
+		"banner": {
+			"enabled": true,
+			"description": "Show 'with help' in header when running in .agent directory"
+		},
+		"cli": {
+			"enabled": true,
+			"description": "Inject agent.jsonc prompt (identity + environment + user prompt) into CLI config via load_config()"
+		},
+		"directory": {
+			"enabled": true,
+			"description": "Support local .agent/ overrides (via config.yaml), the agent.jsonc manifest, shared scope helpers, daemon anchor, and more."
+		},
+		"runtime": {
+			"enabled": true,
+			"description": "Managed scopes for runtime data (environment variables, model, toolsets, etc.)"
+		},
+		"storage": {
+			"enabled": true,
+			"description": "Folder-scoped session state with strict .agent/storage/state.db in project scope"
+		},
+		"skills": {
+			"enabled": true,
+			"description": "Folder-scoped skills via get_ankh_scope_root(); skip bundled sync in project scope; scope prompt_builder, memory_tool, SOUL.md"
+		}
+	},
+	"labs": {
+		"auth": {
+			"enabled": false,
+			"description": "Auth dual-read (global+local merge) and local-write when in scope"
+		},
+		"cron": {
+			"enabled": false,
+			"description": "Scope gateway and cron storage paths (config, sessions, delivery, hooks, pairing, caches)"
+		}
+	}
+}

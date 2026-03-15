@@ -1,0 +1,10 @@
+**/.DS_Store
+**/__pycache__/
+**/*.pyc
+examples/**/.agent/storage/
+examples/**/.agent/skills/.hub/
+examples/**/.agent/skills/**/.bundled_manifest
+examples/**/.agent/auth.json
+examples/**/.agent/processes.json
+examples/**/.agent/modal_snapshots.json
+examples/**/.agent/singularity_snapshots.json

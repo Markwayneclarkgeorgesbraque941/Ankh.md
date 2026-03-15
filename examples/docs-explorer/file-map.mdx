@@ -1,0 +1,68 @@
+---
+title: Where to Find Files
+description: Key paths in the Agent Ankh repository and what each contains.
+---
+
+# Where to Find Files
+
+This page maps important paths in the Agent Ankh repository.
+
+## Root
+
+| Path | Purpose |
+|------|---------|
+| `README.md` | Main entry point: what Ankh is, quick start, commands, Ankh vs Hermes, package scripts |
+| `package.json` | Workspace definition, npm scripts (`install`, `build`, `deploy`, `bootstrap`, `reset`), bin entry points |
+| `src/vendor.json` | Hermes version, source URL, paths (source of truth) |
+
+## Binaries & CLI
+
+| Path | Purpose |
+|------|---------|
+| `bin/ankh` | CLI for setup/uninstall; delegates to deployed wrapper when available |
+| `bin/hermes` | Hermes multiplexer: `hermes ankh` passthrough to ankh, patched runtime in `.agent` scope, otherwise default Hermes |
+| `bin/ankh-hermes` | Alias to `hermes ankh` |
+
+## In-App Docs
+
+| Path | Purpose |
+|------|---------|
+| `src/resources/console/help.md` | Runtime help (shipped with deploy for integrity); scope behavior and `.agent` layout |
+
+## Build Pipeline
+
+| Path | Purpose |
+|------|---------|
+| `src/scripts/build/install.sh` | Clones Hermes source from vendor.json, applies patches into `.build/cache/` |
+| `src/scripts/build/build.sh` | Builds Hermes in `.build/` (venv, Python deps) |
+| `src/scripts/build/deploy.sh` | Copies build to `~/.agent/extensions/ankh/runtime`, creates wrappers |
+| `src/scripts/test/test.sh` | Test orchestrator (runs e2e-repo, e2e-tarball) |
+
+## Patches
+
+| Path | Purpose |
+|------|---------|
+| `src/patches/config.json` | Patch manifest: core (banner, directory, runtime, storage, skills), labs (auth, cron – disabled) |
+| `src/patches/core/` | Core patches: `banner.patch`, `directory.patch`, `runtime.patch`, `storage.patch`, `skills.patch` |
+| `src/patches/labs/` | Labs patches (disabled by default): `auth.patch`, `cron.patch` |
+
+## Defaults & Examples
+
+| Path | Purpose |
+|------|---------|
+| `src/resources/defaults/` | Repo-local mirror of `~/.hermes` (config, `.env.example`, skills) for deterministic examples |
+| `examples/README.md` | Ankh manifest model, example profiles, validation commands |
+| `examples/docs-explorer/`, `web-researcher/`, `ascii-designer/`, `diagram-maker/`, `plan-writer/` | Sample project folders with `.agent/config.yaml`, `.agent/agent.jsonc`, and local skills |
+| `examples/docs-explorer/` | This Mintlify docs example – explains Ankh and where to find files |
+
+## Example Project Layout
+
+Each example project under `examples/<profile>/` contains:
+
+```
+<profile>/
+├── .agent/
+│   ├── config.yaml   # model, toolsets, etc.
+│   ├── agent.jsonc   # agent metadata (mainframe, uuid, title, prompt)
+│   └── skills/       # project-local skills
+```

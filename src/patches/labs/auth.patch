@@ -1,0 +1,185 @@
+diff --git a/agent/auxiliary_client.py b/agent/auxiliary_client.py
+index e274e65..e042347 100644
+--- a/agent/auxiliary_client.py
++++ b/agent/auxiliary_client.py
+@@ -73,8 +73,6 @@ auxiliary_is_nous: bool = False
+ _OPENROUTER_MODEL = "google/gemini-3-flash-preview"
+ _NOUS_MODEL = "gemini-3-flash"
+ _NOUS_DEFAULT_BASE_URL = "https://inference-api.nousresearch.com/v1"
+-_AUTH_JSON_PATH = Path.home() / ".hermes" / "auth.json"
+-
+ # Codex fallback: uses the Responses API (the only endpoint the Codex
+ # OAuth token can access) with a fast model for auxiliary tasks.
+ _CODEX_AUX_MODEL = "gpt-5.3-codex"
+@@ -309,18 +307,18 @@ class AsyncCodexAuxiliaryClient:
+ 
+ 
+ def _read_nous_auth() -> Optional[dict]:
+-    """Read and validate ~/.hermes/auth.json for an active Nous provider.
++    """Read auth store for active Nous provider (global+local merge).
+ 
+     Returns the provider state dict if Nous is active with tokens,
+     otherwise None.
+     """
+     try:
+-        if not _AUTH_JSON_PATH.is_file():
++        from hermes_cli.auth import get_provider_auth_state, get_active_provider
++        if get_active_provider() != "nous":
+             return None
+-        data = json.loads(_AUTH_JSON_PATH.read_text())
+-        if data.get("active_provider") != "nous":
++        provider = get_provider_auth_state("nous")
++        if not provider:
+             return None
+-        provider = data.get("providers", {}).get("nous", {})
+         # Must have at least an access_token or agent_key
+         if not provider.get("agent_key") and not provider.get("access_token"):
+             return None
+diff --git a/hermes_cli/auth.py b/hermes_cli/auth.py
+index 37a971c..d591e54 100644
+--- a/hermes_cli/auth.py
++++ b/hermes_cli/auth.py
+@@ -36,7 +36,7 @@ from typing import Any, Dict, List, Optional
+ import httpx
+ import yaml
+ 
+-from hermes_cli.config import get_hermes_home, get_config_path
++from hermes_cli.config import get_hermes_home, get_config_path, get_auth_path, find_agent_dir
+ from hermes_constants import OPENROUTER_BASE_URL
+ 
+ logger = logging.getLogger(__name__)
+@@ -304,13 +304,34 @@ def _oauth_trace(event: str, *, sequence_id: Optional[str] = None, **fields: Any
+ # =============================================================================
+ 
+ def _auth_file_path() -> Path:
+-    return get_hermes_home() / "auth.json"
++    """Return the auth file path for writes (scoped: .agent/auth.json when in project, else ~/.hermes/auth.json)."""
++    return get_auth_path()
+ 
+ 
+ def _auth_lock_path() -> Path:
+     return _auth_file_path().with_suffix(".lock")
+ 
+ 
++def _load_single_auth_file(path: Path) -> Dict[str, Any]:
++    """Load and normalize a single auth.json file."""
++    if not path.exists():
++        return {"version": AUTH_STORE_VERSION, "providers": {}}
++    try:
++        raw = json.loads(path.read_text())
++    except Exception:
++        return {"version": AUTH_STORE_VERSION, "providers": {}}
++    if isinstance(raw, dict) and isinstance(raw.get("providers"), dict):
++        return raw
++    if isinstance(raw, dict) and isinstance(raw.get("systems"), dict):
++        systems = raw["systems"]
++        providers = {}
++        if "nous_portal" in systems:
++            providers["nous"] = systems["nous_portal"]
++        return {"version": AUTH_STORE_VERSION, "providers": providers,
++                "active_provider": "nous" if providers else None}
++    return {"version": AUTH_STORE_VERSION, "providers": {}}
++
++
+ _auth_lock_holder = threading.local()
+ 
+ @contextmanager
+@@ -372,30 +393,23 @@ def _auth_store_lock(timeout_seconds: float = AUTH_LOCK_TIMEOUT_SECONDS):
+ 
+ 
+ def _load_auth_store(auth_file: Optional[Path] = None) -> Dict[str, Any]:
+-    auth_file = auth_file or _auth_file_path()
+-    if not auth_file.exists():
+-        return {"version": AUTH_STORE_VERSION, "providers": {}}
+-
+-    try:
+-        raw = json.loads(auth_file.read_text())
+-    except Exception:
+-        return {"version": AUTH_STORE_VERSION, "providers": {}}
+-
+-    if isinstance(raw, dict) and isinstance(raw.get("providers"), dict):
+-        return raw
+-
+-    # Migrate from PR's "systems" format if present
+-    if isinstance(raw, dict) and isinstance(raw.get("systems"), dict):
+-        systems = raw["systems"]
+-        providers = {}
+-        if "nous_portal" in systems:
+-            providers["nous"] = systems["nous_portal"]
+-        return {"version": AUTH_STORE_VERSION, "providers": providers,
+-                "active_provider": "nous" if providers else None}
+-
+-    return {"version": AUTH_STORE_VERSION, "providers": {}}
++    """Load auth store with dual-read: global first, then local (local overrides). Use HERMES_ANKH_SCOPE=global for global-only."""
++    if auth_file is not None:
++        return _load_single_auth_file(auth_file)
++
++    store = _load_single_auth_file(get_hermes_home() / "auth.json")
++    if os.getenv("HERMES_ANKH_SCOPE") == "global":
++        return store
++    local = find_agent_dir()
++    if local is not None:
++        local_store = _load_single_auth_file(local / "auth.json")
++        store["providers"] = {**store.get("providers", {}), **local_store.get("providers", {})}
++        if local_store.get("active_provider") is not None:
++            store["active_provider"] = local_store["active_provider"]
++    return store
+ 
+ 
+ def _save_auth_store(auth_store: Dict[str, Any]) -> Path:
++    _auth_file_path().parent.mkdir(parents=True, exist_ok=True)
+     auth_file = _auth_file_path()
+     auth_file.parent.mkdir(parents=True, exist_ok=True)
+
+diff --git a/hermes_cli/main.py b/hermes_cli/main.py
+index 14706f2..b336f7b 100644
+--- a/hermes_cli/main.py
++++ b/hermes_cli/main.py
+@@ -78,7 +78,7 @@ logger = logging.getLogger(__name__)
+ def _has_any_provider_configured() -> bool:
+     """Check if at least one inference provider is usable."""
+     from hermes_cli.config import get_env_path, get_hermes_home
+-    from hermes_cli.auth import get_auth_status
++    from hermes_cli.auth import get_auth_status, get_active_provider
+ 
+     # Check env vars (may be set by .env or shell).
+     # OPENAI_BASE_URL alone counts — local models (vLLM, llama.cpp, etc.)
+@@ -108,19 +108,18 @@ def _has_any_provider_configured() -> bool:
+         except Exception:
+             pass
+ 
+-    # Check for Nous Portal OAuth credentials
+-    auth_file = get_hermes_home() / "auth.json"
+-    if auth_file.exists():
+-        try:
+-            import json
+-            auth = json.loads(auth_file.read_text())
+-            active = auth.get("active_provider")
+-            if active:
++    # Check for OAuth credentials (uses merged global+local auth)
++    try:
++        active = get_active_provider()
++        if active:
++            try:
+                 status = get_auth_status(active)
+                 if status.get("logged_in"):
+                     return True
+-        except Exception:
+-            pass
++            except Exception:
++                pass
++    except Exception:
++        pass
+ 
+     return False
+ 
+@@ -648,7 +647,8 @@ def cmd_whatsapp(args):
+         print("✓ Bridge dependencies already installed")
+ 
+     # ── Step 5: Check for existing session ───────────────────────────────
+-    session_dir = Path.home() / ".hermes" / "whatsapp" / "session"
++    from hermes_cli.config import get_ankh_scope_root
++    session_dir = get_ankh_scope_root() / "whatsapp" / "session"
+     session_dir.mkdir(parents=True, exist_ok=True)
+ 
+     if (session_dir / "creds.json").exists():

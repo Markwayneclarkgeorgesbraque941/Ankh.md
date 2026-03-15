@@ -1,0 +1,21 @@
+# Build
+.build/
+.cursor/
+releases/
+
+# Environment
+**/.env
+**/.env.local
+
+# Dependencies
+node_modules/
+
+# OS
+.DS_Store
+
+# Python
+**/__pycache__/
+**/*.py[cod]
+**/$py.class
+**/*.egg-info/
+**/.eggs/

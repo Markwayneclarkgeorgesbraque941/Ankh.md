@@ -1,0 +1,56 @@
+{
+	"name": "ankh.md",
+	"homepage": "https://www.ankh.md",
+	"description": "A mysterious multi-agent swarm framework summoned by TAW Agent from 1971 to help you craft a better future towards 2133 & beyond. Ankh.md is a Hermes Agent (Nous Research) launch exclusive.",
+	"version": "1.0.0",
+	"type": "module",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Abruptive/Ankh.md"
+	},
+	"dependencies": {
+		"@clack/prompts": "^1.1.0"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+  "scripts": {
+		"postinstall": "bash src/scripts/build/install.sh",
+		"build": "bash src/scripts/build/build.sh",
+		"test": "bash src/scripts/test/test.sh",
+		"deploy": "bash src/scripts/build/deploy.sh",
+		"release": "bun run test && bash src/scripts/build/release.sh",
+		"clean": "rm -rf .build && rm -rf node_modules",
+		"bootstrap": "bun run postinstall && bun run build && bun run deploy"
+	},
+  "files": [
+		"src",
+		"examples",
+		"LICENSE",
+		"README.md",
+		"DOCS.md"
+	],
+	"keywords": [
+		"agent",
+		"cli",
+		"cloud",
+		"ai",
+		"cross-platform",
+		"local",
+		"free",
+		"swarm",
+		"hermes",
+		"mit-license",
+		"agents",
+		"swarm-intelligence",
+		"ai-agents",
+		"ankh",
+		"abruptive",
+		"nous-hermes",
+		"hermes-agent",
+		"nous-research",
+		"agent-so",
+		"alex-doda"
+	]	
+}

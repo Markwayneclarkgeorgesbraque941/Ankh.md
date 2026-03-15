@@ -1,0 +1,32 @@
+diff --git a/hermes_state.py b/hermes_state.py
+index 84c3bf4..b273f52 100644
+--- a/hermes_state.py
++++ b/hermes_state.py
+@@ -22,8 +22,26 @@ import time
+ from pathlib import Path
+ from typing import Dict, Any, List, Optional
+ 
++from hermes_cli.config import get_ankh_scope_root, get_hermes_home
+ 
+-DEFAULT_DB_PATH = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes")) / "state.db"
++
++def _resolve_default_db_path() -> Path:
++    """Resolve default session DB path with strict scoped storage.
++
++    - Global scope / outside .agent: ~/.hermes/state.db
++    - Project scope (.agent): .agent/storage/state.db
++    """
++    scope_root = get_ankh_scope_root()
++    global_root = get_hermes_home()
++
++    if scope_root.resolve() == global_root.resolve():
++        return global_root / "state.db"
++
++    return scope_root / "storage" / "state.db"
++
++
++DEFAULT_DB_PATH = _resolve_default_db_path()
++DEFAULT_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+ 
+ SCHEMA_VERSION = 4
+ 

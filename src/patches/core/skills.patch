@@ -1,0 +1,145 @@
+diff --git a/agent/skill_commands.py b/agent/skill_commands.py
+index 4466ba3..9f51ea6 100644
+--- a/agent/skill_commands.py
++++ b/agent/skill_commands.py
+@@ -14,7 +14,7 @@ _skill_commands: Dict[str, Dict[str, Any]] = {}
+ 
+ 
+ def scan_skill_commands() -> Dict[str, Dict[str, Any]]:
+-    """Scan ~/.hermes/skills/ and return a mapping of /command -> skill info.
++    """Scan the scoped skills directory (get_ankh_scope_root() / "skills") and return a mapping of /command -> skill info.
+ 
+     Returns:
+         Dict mapping "/skill-name" to {name, description, skill_md_path, skill_dir}.
+diff --git a/agent/prompt_builder.py b/agent/prompt_builder.py
+index 0582d63..3262e7a 100644
+--- a/agent/prompt_builder.py
++++ b/agent/prompt_builder.py
+@@ -187,8 +187,8 @@ def build_skills_system_prompt() -> str:
+     match skills by meaning, not just name.
+     Filters out skills incompatible with the current OS platform.
+     """
+-    hermes_home = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+-    skills_dir = hermes_home / "skills"
++    from hermes_cli.config import get_ankh_scope_root
++    skills_dir = get_ankh_scope_root() / "skills"
+ 
+     if not skills_dir.exists():
+         return ""
+@@ -364,9 +364,12 @@ def build_context_files_prompt(cwd: Optional[str] = None) -> str:
+             soul_path = candidate
+             break
+     if not soul_path:
+-        global_soul = Path.home() / ".hermes" / "SOUL.md"
+-        if global_soul.exists():
+-            soul_path = global_soul
++        from hermes_cli.config import get_config_directories
++        for d in reversed(get_config_directories()):
++            candidate = d / "SOUL.md"
++            if candidate.exists():
++                soul_path = candidate
++                break
+ 
+     if soul_path:
+         try:
+diff --git a/tools/memory_tool.py b/tools/memory_tool.py
+index 2ce7631..ed34898 100644
+--- a/tools/memory_tool.py
++++ b/tools/memory_tool.py
+@@ -33,8 +33,9 @@ from typing import Dict, Any, List, Optional
+ 
+ logger = logging.getLogger(__name__)
+ 
+-# Where memory files live
+-MEMORY_DIR = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes")) / "memories"
++# Where memory files live (scoped: .agent/memories when in project, else ~/.hermes/memories)
++from hermes_cli.config import get_memories_dir
++MEMORY_DIR = get_memories_dir()
+ 
+ ENTRY_DELIMITER = "\n§\n"
+ 
+diff --git a/tools/skill_manager_tool.py b/tools/skill_manager_tool.py
+index 29bf1be..938536f 100644
+--- a/tools/skill_manager_tool.py
++++ b/tools/skill_manager_tool.py
+@@ -68,9 +68,9 @@ def _security_scan_skill(skill_dir: Path) -> Optional[str]:
+ import yaml
+ 
+ 
+-# All skills live in ~/.hermes/skills/ (single source of truth)
+-HERMES_HOME = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+-SKILLS_DIR = HERMES_HOME / "skills"
++# All skills live in ~/.hermes/skills/ by default, or .agent/skills when in project
++from hermes_cli.config import get_ankh_scope_root
++SKILLS_DIR = get_ankh_scope_root() / "skills"
+ 
+ MAX_NAME_LENGTH = 64
+ MAX_DESCRIPTION_LENGTH = 1024
+diff --git a/tools/skills_hub.py b/tools/skills_hub.py
+index b4e6694..2d2e50e 100644
+--- a/tools/skills_hub.py
++++ b/tools/skills_hub.py
+@@ -38,11 +38,11 @@ logger = logging.getLogger(__name__)
+ 
+ 
+ # ---------------------------------------------------------------------------
+-# Paths
++# Paths (scoped: .agent/skills when in project, else ~/.hermes/skills)
+ # ---------------------------------------------------------------------------
+ 
+-HERMES_HOME = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+-SKILLS_DIR = HERMES_HOME / "skills"
++from hermes_cli.config import get_ankh_scope_root
++SKILLS_DIR = get_ankh_scope_root() / "skills"
+ HUB_DIR = SKILLS_DIR / ".hub"
+ LOCK_FILE = HUB_DIR / "lock.json"
+ QUARANTINE_DIR = HUB_DIR / "quarantine"
+diff --git a/tools/skills_sync.py b/tools/skills_sync.py
+index b89e459..c2773ef 100644
+--- a/tools/skills_sync.py
++++ b/tools/skills_sync.py
+@@ -30,9 +30,8 @@ from typing import Dict, List, Tuple
+ 
+ logger = logging.getLogger(__name__)
+ 
+-
+-HERMES_HOME = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+-SKILLS_DIR = HERMES_HOME / "skills"
++from hermes_cli.config import get_ankh_scope_root, get_hermes_home
++SKILLS_DIR = get_ankh_scope_root() / "skills"
+ MANIFEST_FILE = SKILLS_DIR / ".bundled_manifest"
+ 
+ 
+@@ -151,6 +151,12 @@ def sync_skills(quiet: bool = False) -> dict:
+         dict with keys: copied (list), updated (list), skipped (int),
+                         user_modified (list), cleaned (list), total_bundled (int)
+     """
++    # In Ankh project scope: .agent/skills is project-owned; respect FS, don't sync bundled
++    if get_ankh_scope_root().resolve() != get_hermes_home().resolve():
++        return {
++            "copied": [], "updated": [], "skipped": 0,
++            "user_modified": [], "cleaned": [], "total_bundled": 0,
++        }
+     bundled_dir = _get_bundled_dir()
+     if not bundled_dir.exists():
+         return {
+
+diff --git a/tools/skills_tool.py b/tools/skills_tool.py
+index e8baa0f..50ae460 100644
+--- a/tools/skills_tool.py
++++ b/tools/skills_tool.py
+@@ -76,9 +76,8 @@ logger = logging.getLogger(__name__)
+ 
+ 
+-# All skills live in ~/.hermes/skills/ (seeded from bundled skills/ on install).
+-# This is the single source of truth -- agent edits, hub installs, and bundled
+-# skills all coexist here without polluting the git repo.
+-HERMES_HOME = Path(os.getenv("HERMES_HOME", Path.home() / ".hermes"))
+-SKILLS_DIR = HERMES_HOME / "skills"
++# All skills live in ~/.hermes/skills/ by default, or project-local .agent/skills
++# when running in an Ankh-scoped directory.
++from hermes_cli.config import get_ankh_scope_root
++SKILLS_DIR = get_ankh_scope_root() / "skills"
+ 
+ # Anthropic-recommended limits for progressive disclosure efficiency
+ MAX_NAME_LENGTH = 64

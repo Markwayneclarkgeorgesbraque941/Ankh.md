@@ -1,0 +1,70 @@
+diff --git a/tools/environments/base.py b/tools/environments/base.py
+index 295c84d..1abe9ee 100644
+--- a/tools/environments/base.py
++++ b/tools/environments/base.py
+@@ -16,7 +16,8 @@ def get_sandbox_dir() -> Path:
+     if custom:
+         p = Path(custom)
+     else:
+-        p = Path.home() / ".hermes" / "sandboxes"
++        from hermes_cli.config import get_ankh_scope_root
++        p = get_ankh_scope_root() / "sandboxes"
+     p.mkdir(parents=True, exist_ok=True)
+     return p
+ 
+diff --git a/tools/environments/modal.py b/tools/environments/modal.py
+index 44ad51e..0a47da6 100644
+--- a/tools/environments/modal.py
++++ b/tools/environments/modal.py
+@@ -18,7 +18,8 @@ from tools.interrupt import is_interrupted
+ 
+ logger = logging.getLogger(__name__)
+ 
+-_SNAPSHOT_STORE = Path.home() / ".hermes" / "modal_snapshots.json"
++from hermes_cli.config import get_ankh_scope_root
++_SNAPSHOT_STORE = get_ankh_scope_root() / "modal_snapshots.json"
+ 
+ 
+ def _load_snapshots() -> Dict[str, str]:
+diff --git a/tools/environments/singularity.py b/tools/environments/singularity.py
+index 0be1c38..6f85eca 100644
+--- a/tools/environments/singularity.py
++++ b/tools/environments/singularity.py
+@@ -21,7 +21,8 @@ from tools.interrupt import is_interrupted
+ 
+ logger = logging.getLogger(__name__)
+ 
+-_SNAPSHOT_STORE = Path.home() / ".hermes" / "singularity_snapshots.json"
++from hermes_cli.config import get_ankh_scope_root
++_SNAPSHOT_STORE = get_ankh_scope_root() / "singularity_snapshots.json"
+ 
+ 
+ def _load_snapshots() -> Dict[str, str]:
+diff --git a/tools/process_registry.py b/tools/process_registry.py
+index 2c044f9..ccc2dbe 100644
+--- a/tools/process_registry.py
++++ b/tools/process_registry.py
+@@ -51,7 +51,8 @@ logger = logging.getLogger(__name__)
+ 
+ 
+ # Checkpoint file for crash recovery (gateway only)
+-CHECKPOINT_PATH = Path(os.path.expanduser("~/.hermes/processes.json"))
++from hermes_cli.config import get_ankh_scope_root
++CHECKPOINT_PATH = get_ankh_scope_root() / "processes.json"
+ 
+ # Limits
+ MAX_OUTPUT_CHARS = 200_000      # 200KB rolling output buffer
+diff --git a/tools/tts_tool.py b/tools/tts_tool.py
+index 7d39a9f..9fd654e 100644
+--- a/tools/tts_tool.py
++++ b/tools/tts_tool.py
+@@ -65,7 +65,8 @@ DEFAULT_ELEVENLABS_VOICE_ID = "pNInz6obpgDQGcFmaJgB"  # Adam
+ DEFAULT_ELEVENLABS_MODEL_ID = "eleven_multilingual_v2"
+ DEFAULT_OPENAI_MODEL = "gpt-4o-mini-tts"
+ DEFAULT_OPENAI_VOICE = "alloy"
+-DEFAULT_OUTPUT_DIR = os.path.expanduser("~/.hermes/audio_cache")
++from hermes_cli.config import get_ankh_scope_root
++DEFAULT_OUTPUT_DIR = str(get_ankh_scope_root() / "audio_cache")
+ MAX_TEXT_LENGTH = 4000
+ 
+ 

@@ -1,0 +1,59 @@
+---
+title: How Agent Ankh Works
+description: Overview of Agent Ankh architecture, workflow, and scoped runtime behavior.
+---
+
+# How Agent Ankh Works
+
+Agent Ankh is a patched build of [Hermes Agent](https://hermes-agent.nousresearch.com/) with per-folder `.agent/` scoping. Each project can have its own config, tools, skills, and session history.
+
+## Workflow
+
+1. **First-time install**: Run `bun bootstrap` from the package root
+2. **Configure Hermes**: Run `ankh setup` – it will guide you to `hermes setup` if needed
+3. **Learn about Ankh**: Run `hermes ankh` or `ankh` for usage
+4. **Use Hermes**:
+   - Inside a valid `.agent/` project → patched Hermes Ankh runtime
+   - Outside a valid `.agent/` project → default Hermes runtime
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `ankh setup` | Check the installed Ankh runtime, PATH readiness, and Hermes global setup |
+| `ankh uninstall` | Remove Ankh runtime/wrappers and optionally Hermes/data |
+| `hermes ankh` | Passthrough to ankh (setup, uninstall, etc.) |
+| `ankh-hermes` | Alias to `hermes ankh` |
+| `hermes` | Run patched Hermes only in valid `.agent/` projects; otherwise run default Hermes |
+
+## Ankh vs Upstream Hermes
+
+| Aspect | Upstream Hermes | Agent Ankh |
+|--------|-----------------|------------|
+| Config | Global `~/.hermes/config.yaml` only | Global + project-local `.agent/config.yaml` (merged) |
+| Skills | Global `~/.hermes/skills/` | Project-local `.agent/skills/` when in scope |
+| Sessions | Global `~/.hermes/state.db` | Project-local `.agent/storage/state.db` when in scope |
+| `hermes` command | Single binary | Multiplexer: patched in `.agent` scope, else default Hermes |
+
+When you run `hermes` in a directory with a valid `.agent/config.yaml`:
+
+- **config.yaml** – merged from `~/.hermes/config.yaml` and `.agent/config.yaml`
+- **.env** – merged from `~/.hermes/.env` and `.agent/.env`
+- **skills** – `.agent/skills/` (project-local)
+- **sessions** – `.agent/storage/state.db` (project-local)
+
+The banner shows "Hermes Agent v{version} with help" only when running in a valid Ankh-scoped project directory.
+
+## Package Scripts
+
+| Command | Description |
+|---------|-------------|
+| `bun install` | Clone Hermes source, apply patches |
+| `bun run build` | Create venv and build Hermes in `.build/` |
+| `bun run deploy` | Copy to `~/.agent/extensions/ankh/runtime`, create wrappers in `~/.agent/extensions/ankh/bin` |
+| `bun bootstrap` | Run install, build, and deploy |
+| `bun run clean` | Remove `.build` |
+
+## Next Steps
+
+See [File Map](/file-map) for where to find key files in the repository.

